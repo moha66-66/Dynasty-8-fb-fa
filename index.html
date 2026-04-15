@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynasty 8 - Panel Immobilier</title>
+    <title>Dynasty 8 - Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -12,153 +12,148 @@
 
     <style>
         [x-cloak] { display: none !important; }
-        body { background-color: #0f172a; color: white; font-family: sans-serif; }
+        body { background-color: #0f172a; color: white; }
         .card { background: #1e293b; border: 1px solid #334155; }
         input, select { background: #0f172a !important; color: white; border: 1px solid #334155; }
-        .btn-active { background-color: #2563eb !important; opacity: 1 !important; }
     </style>
 </head>
 <body x-data="dynastyApp()">
 
-    <template x-if="!isLoggedIn">
-        <div class="min-h-screen flex items-center justify-center p-6">
-            <div class="card p-8 rounded-2xl w-full max-w-md shadow-2xl border-t-4 border-blue-600 text-center">
-                <h1 class="text-4xl font-black mb-2 italic">DYNASTY 8</h1>
-                <div class="space-y-4 mt-8">
-                    <input type="email" x-model="email" placeholder="Email" class="w-full p-3 rounded-lg outline-none">
-                    <input type="password" x-model="pass" placeholder="Mot de passe" class="w-full p-3 rounded-lg outline-none">
-                    <button @click="login()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-lg font-bold">CONNEXION</button>
-                </div>
+    <div x-show="!isLoggedIn" class="min-h-screen flex items-center justify-center p-6">
+        <div class="card p-8 rounded-2xl w-full max-w-md shadow-2xl border-t-4 border-blue-600 text-center">
+            <h1 class="text-4xl font-black mb-8 italic">DYNASTY 8</h1>
+            <div class="space-y-4">
+                <input type="email" x-model="email" placeholder="Email" class="w-full p-3 rounded-lg outline-none">
+                <input type="password" x-model="pass" placeholder="Mot de passe" class="w-full p-3 rounded-lg outline-none">
+                <button @click="login()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-lg font-bold">CONNEXION</button>
             </div>
         </div>
-    </template>
+    </div>
 
-    <template x-if="isLoggedIn">
-        <div class="p-4 lg:p-8 max-w-7xl mx-auto" x-cloak>
+    <div x-show="isLoggedIn" x-cloak class="p-4 lg:p-8 max-w-7xl mx-auto">
+        
+        <header class="flex justify-between items-center mb-8 card p-6 rounded-xl">
+            <div class="flex items-center gap-4">
+                <div class="bg-blue-600 p-3 rounded-lg font-bold italic">D8</div>
+                <div>
+                    <h2 class="text-xl font-bold italic uppercase">Panel Immobilier</h2>
+                    <p class="text-xs opacity-50" x-text="currentUser.name + ' • ' + currentUser.grade"></p>
+                </div>
+            </div>
             
-            <header class="flex justify-between items-center mb-8 card p-6 rounded-xl">
-                <div class="flex items-center gap-4">
-                    <div class="bg-blue-600 p-3 rounded-lg font-bold italic">D8</div>
-                    <div>
-                        <h2 class="text-xl font-bold italic uppercase">Nouvelle Propriété</h2>
-                        <p class="text-xs opacity-50" x-text="currentUser.name + ' • ' + currentUser.grade"></p>
+            <div class="flex gap-4 items-center">
+                <button @click="toggleService()" 
+                        :class="inService ? 'bg-red-600' : 'bg-green-600'" 
+                        class="px-6 py-2 rounded-lg font-black text-xs transition-all uppercase shadow-lg">
+                    <span x-text="inService ? '🔴 Quitter Service' : '🟢 Prendre Service'"></span>
+                </button>
+                <button @click="logout()" class="text-red-500 text-xs border border-red-500/20 px-3 py-1 rounded">Quitter</button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 relative">
+            
+            <div class="lg:col-span-2 space-y-6" :class="!inService ? 'opacity-40 pointer-events-none select-none' : ''">
+                
+                <div class="card p-6 rounded-xl space-y-4">
+                    <h3 class="text-blue-400 font-bold uppercase text-xs">Informations Client</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" x-model="form.client" placeholder="Nom & Prénom" class="p-3 rounded-md outline-none">
+                        <input type="text" x-model="form.phone" placeholder="Contact" class="p-3 rounded-md outline-none">
                     </div>
                 </div>
-                
-                <div class="flex gap-4 items-center">
-                    <button @click="toggleService()" 
-                            :class="inService ? 'bg-red-600' : 'bg-green-600'" 
-                            class="px-6 py-2 rounded-lg font-black text-xs transition-all uppercase shadow-lg">
-                        <span x-text="inService ? '🔴 Quitter Service' : '🟢 Prendre Service'"></span>
-                    </button>
-                    <button @click="logout()" class="text-red-500 text-xs border border-red-500/20 px-3 py-1 rounded">Quitter</button>
-                </div>
-            </header>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 relative">
-                
-                <div class="lg:col-span-2 space-y-6" :class="!inService ? 'opacity-40 pointer-events-none' : ''">
-                    
-                    <div class="card p-6 rounded-xl space-y-4">
-                        <h3 class="text-blue-400 font-bold uppercase text-xs">Informations Client</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="text" x-model="form.client" placeholder="Nom & Prénom" class="p-3 rounded-md outline-none">
-                            <input type="text" x-model="form.phone" placeholder="Contact" class="p-3 rounded-md outline-none">
-                        </div>
-                    </div>
+                <div class="card p-6 rounded-xl space-y-6">
+                    <h3 class="text-blue-400 font-bold uppercase text-xs">Détails du bien</h3>
+                    <div class="space-y-4">
+                        <select x-model="form.propId" class="w-full p-3 rounded-md outline-none">
+                            <option value="">-- Sélectionner l'intérieur --</option>
+                            <template x-for="(p, index) in properties" :key="index">
+                                <option :value="index" x-text="p.n"></option>
+                            </template>
+                        </select>
 
-                    <div class="card p-6 rounded-xl space-y-6">
-                        <h3 class="text-blue-400 font-bold uppercase text-xs">Détails du bien</h3>
-                        <div class="space-y-4">
-                            <select x-model="form.propId" class="w-full p-3 rounded-md outline-none">
-                                <option value="">-- Sélectionner l'intérieur --</option>
-                                <template x-for="(p, index) in properties" :key="index">
-                                    <option :value="index" x-text="p.n"></option>
-                                </template>
+                        <div class="p-4 bg-white/5 rounded-lg border border-white/10">
+                            <label class="flex items-center gap-3 cursor-pointer mb-3">
+                                <input type="checkbox" x-model="form.garage" class="w-5 h-5 accent-blue-600">
+                                <span class="font-bold">Ajouter un garage</span>
+                            </label>
+                            <select x-show="form.garage" x-model="form.garageType" class="w-full p-2 rounded outline-none">
+                                <option value="2">Garage 2 places</option>
+                                <option value="6">Garage 6 places</option>
+                                <option value="10">Garage 10 places</option>
+                                <option value="10vip">Garage 10 places VIP</option>
+                                <option value="20">Garage 20 places VIP</option>
+                                <option value="25">Garage 25 places VIP</option>
                             </select>
-
-                            <div class="p-4 bg-white/5 rounded-lg border border-white/10">
-                                <label class="flex items-center gap-3 cursor-pointer mb-3">
-                                    <input type="checkbox" x-model="form.garage" class="w-5 h-5 accent-blue-600">
-                                    <span class="font-bold">Ajouter un garage</span>
-                                </label>
-                                <select x-show="form.garage" x-model="form.garageType" class="w-full p-2 rounded outline-none">
-                                    <option value="2">Garage 2 places</option>
-                                    <option value="6">Garage 6 places</option>
-                                    <option value="10">Garage 10 places</option>
-                                    <option value="10vip">Garage 10 places VIP</option>
-                                    <option value="20">Garage 20 places VIP</option>
-                                    <option value="25">Garage 25 places VIP</option>
-                                </select>
-                            </div>
-
-                            <div class="flex flex-wrap gap-4">
-                                <label class="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 p-2 rounded-md cursor-pointer">
-                                    <input type="checkbox" x-model="form.vip"> <span class="text-[10px] font-bold text-yellow-500 uppercase italic">⭐ Réduction VIP (-5%)</span>
-                                </label>
-                                <label class="flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 p-2 rounded-md cursor-pointer">
-                                    <input type="checkbox" x-model="form.isEntreprise"> <span class="text-[10px] font-bold text-purple-400 uppercase">🏢 Vente Entreprise</span>
-                                </label>
-                            </div>
-
-                            <div class="flex gap-4 p-2 bg-black/20 rounded-lg">
-                                <button @click="form.type = 'achat'" :class="form.type === 'achat' ? 'btn-active' : 'opacity-40'" class="flex-1 py-3 rounded-md font-black uppercase text-sm">Achat</button>
-                                <button @click="form.type = 'location'" :class="form.type === 'location' ? 'btn-active' : 'opacity-40'" class="flex-1 py-3 rounded-md font-black uppercase text-sm">Location</button>
-                            </div>
                         </div>
-                    </div>
 
-                    <div class="card p-6 rounded-xl space-y-4">
-                        <h3 class="text-blue-400 font-bold uppercase text-xs">📂 Documents Requis</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <div class="p-3 border border-blue-600 rounded-lg text-center bg-blue-600/10">
-                                <div class="text-xl mb-1">📸</div><p class="text-[9px] uppercase font-bold">Propriété + CI</p>
-                            </div>
-                            <div class="p-3 border border-blue-600 rounded-lg text-center bg-blue-600/10">
-                                <div class="text-xl mb-1">🗺️</div><p class="text-[9px] uppercase font-bold">Carte GPS</p>
-                            </div>
-                            <div class="p-3 border border-blue-600 rounded-lg text-center bg-blue-600/10">
-                                <div class="text-xl mb-1">ℹ️</div><p class="text-[9px] uppercase font-bold">Informations</p>
-                            </div>
-                            <div :class="form.garage ? 'border-blue-600 bg-blue-600/10' : 'opacity-20 border-white/10'" class="p-3 border rounded-lg text-center transition-all">
-                                <div class="text-xl mb-1">🚗</div><p class="text-[9px] uppercase font-bold">Photo Garage</p>
-                            </div>
-                            <div :class="form.isEntreprise ? 'border-purple-600 bg-purple-600/10' : 'opacity-20 border-white/10'" class="p-3 border rounded-lg text-center transition-all">
-                                <div class="text-xl mb-1">✅</div><p class="text-[9px] uppercase font-bold">Autoris. Staff</p>
-                            </div>
-                            <div :class="form.isEntreprise ? 'border-purple-600 bg-purple-600/10' : 'opacity-20 border-white/10'" class="p-3 border rounded-lg text-center transition-all">
-                                <div class="text-xl mb-1">🎫</div><p class="text-[9px] uppercase font-bold">Badge</p>
-                            </div>
-                            <div class="p-3 border border-white/10 rounded-lg text-center opacity-20">
-                                <div class="text-xl mb-1">🛡️</div><p class="text-[9px] uppercase font-bold">Visa / Army</p>
-                            </div>
+                        <div class="flex flex-wrap gap-4">
+                            <label class="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 p-2 rounded-md cursor-pointer">
+                                <input type="checkbox" x-model="form.vip"> <span class="text-[10px] font-bold text-yellow-500 uppercase italic">⭐ Réduction VIP (-5%)</span>
+                            </label>
+                            <label class="flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 p-2 rounded-md cursor-pointer">
+                                <input type="checkbox" x-model="form.isEntreprise"> <span class="text-[10px] font-bold text-purple-400 uppercase">🏢 Vente Entreprise</span>
+                            </label>
+                        </div>
+
+                        <div class="flex gap-4 p-2 bg-black/20 rounded-lg">
+                            <button @click="form.type = 'achat'" :class="form.type === 'achat' ? 'bg-blue-600' : 'opacity-40'" class="flex-1 py-3 rounded-md font-black uppercase text-sm">Achat</button>
+                            <button @click="form.type = 'location'" :class="form.type === 'location' ? 'bg-blue-600' : 'opacity-40'" class="flex-1 py-3 rounded-md font-black uppercase text-sm">Location</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="space-y-6">
-                    <div class="card p-6 rounded-xl border-t-4 border-blue-600 shadow-2xl sticky top-8">
-                        <h3 class="font-black italic text-xl mb-6 uppercase">Recapitulatif</h3>
-                        <div class="space-y-3 text-sm">
-                            <div class="flex justify-between opacity-70"><span>Bien :</span> <span x-text="getPropPrice().toLocaleString() + '$'"></span></div>
-                            <div x-show="form.garage" class="flex justify-between opacity-70"><span>Garage :</span> <span x-text="getGaragePrice().toLocaleString() + '$'"></span></div>
-                            <div x-show="form.vip" class="flex justify-between text-yellow-500 font-bold"><span>Remise VIP :</span> <span>-5%</span></div>
-                            <div class="flex justify-between text-2xl font-black mt-6 pt-4 border-t border-white/20">
-                                <span>TOTAL</span>
-                                <span class="text-blue-400" x-text="calculateFinal().toLocaleString() + '$'"></span>
-                            </div>
+                <div class="card p-6 rounded-xl space-y-4">
+                    <h3 class="text-blue-400 font-bold uppercase text-xs">📂 Documents Requis</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div class="p-3 border border-blue-600 rounded-lg text-center bg-blue-600/10">
+                            <div class="text-xl mb-1">📸</div><p class="text-[9px] uppercase font-bold">Propriété + CI</p>
                         </div>
-                        <button @click="saveSale()" class="w-full mt-8 bg-blue-600 hover:bg-blue-700 p-4 rounded-xl font-black uppercase transition-all shadow-lg">
-                            Enregistrer la vente
-                        </button>
+                        <div class="p-3 border border-blue-600 rounded-lg text-center bg-blue-600/10">
+                            <div class="text-xl mb-1">🗺️</div><p class="text-[9px] uppercase font-bold">Carte GPS</p>
+                        </div>
+                        <div class="p-3 border border-blue-600 rounded-lg text-center bg-blue-600/10">
+                            <div class="text-xl mb-1">ℹ️</div><p class="text-[9px] uppercase font-bold">Informations</p>
+                        </div>
+                        <div :class="form.garage ? 'border-blue-600 bg-blue-600/10' : 'opacity-20 border-white/10'" class="p-3 border rounded-lg text-center">
+                            <div class="text-xl mb-1">🚗</div><p class="text-[9px] uppercase font-bold">Photo Garage</p>
+                        </div>
+                        <div :class="form.isEntreprise ? 'border-purple-600 bg-purple-600/10' : 'opacity-20 border-white/10'" class="p-3 border rounded-lg text-center">
+                            <div class="text-xl mb-1">✅</div><p class="text-[9px] uppercase font-bold">Autoris. Staff</p>
+                        </div>
+                        <div :class="form.isEntreprise ? 'border-purple-600 bg-purple-600/10' : 'opacity-20 border-white/10'" class="p-3 border rounded-lg text-center">
+                            <div class="text-xl mb-1">🎫</div><p class="text-[9px] uppercase font-bold">Badge</p>
+                        </div>
+                        <div class="p-3 border border-white/10 rounded-lg text-center opacity-20">
+                            <div class="text-xl mb-1">🛡️</div><p class="text-[9px] uppercase font-bold">Visa / Army</p>
+                        </div>
                     </div>
                 </div>
+            </div>
 
+            <div class="space-y-6">
+                <div class="card p-6 rounded-xl border-t-4 border-blue-600 shadow-2xl sticky top-8">
+                    <h3 class="font-black italic text-xl mb-6 uppercase">Facturation</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between opacity-70"><span>Bien :</span> <span x-text="getPropPrice().toLocaleString() + '$'"></span></div>
+                        <div x-show="form.garage" class="flex justify-between opacity-70"><span>Garage :</span> <span x-text="getGaragePrice().toLocaleString() + '$'"></span></div>
+                        <div x-show="form.vip" class="flex justify-between text-yellow-500 font-bold"><span>Remise VIP :</span> <span>-5%</span></div>
+                        <div class="flex justify-between text-2xl font-black mt-6 pt-4 border-t border-white/20">
+                            <span>TOTAL</span>
+                            <span class="text-blue-400" x-text="calculateFinal().toLocaleString() + '$'"></span>
+                        </div>
+                    </div>
+                    <button @click="saveSale()" class="w-full mt-8 bg-blue-600 hover:bg-blue-700 p-4 rounded-xl font-black uppercase tracking-widest transition-all">
+                        Enregistrer
+                    </button>
+                </div>
             </div>
         </div>
-    </template>
+    </div>
 
     <script>
+    // Configuration Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyC84uXf-fxi3QgQthh1YguzWcb9dRrs3RI",
         authDomain: "dynasty-8-fb-fa.firebaseapp.com",
@@ -176,9 +171,9 @@
         return {
             isLoggedIn: false,
             inService: false,
-            email: '', pass: '',
-            currentUser: { name: 'Agent', grade: 'Agent' },
-            // TA LISTE COMPLETE DE BASE
+            email: '', 
+            pass: '',
+            currentUser: { name: 'Agent', grade: 'Recrue' },
             properties: [
                 {n: 'Motel', s: 0, l: 2625}, {n: 'Trailer', s: 0, l: 2625},
                 {n: 'House 1', s: 43750, l: 5250}, {n: 'House 2', s: 61250, l: 8750},
@@ -198,7 +193,6 @@
                 {n: 'Headquarter', s: 3500000, l: 175000}, {n: 'Biker', s: 525000, l: 26250},
                 {n: 'Bar', s: 700000, l: 35000}
             ],
-            // LISTE DES GARAGES
             garagesData: [
                 {n: 'Garage 2 places', s: 26250, l: 1750}, 
                 {n: 'Garage 6 places', s: 78750, l: 5250},
@@ -219,7 +213,7 @@
                         const doc = await db.collection("users").doc(user.user.email).get();
                         if(doc.exists) this.currentUser = doc.data();
                         this.isLoggedIn = true;
-                    }).catch(err => alert("Erreur: " + err.message));
+                    }).catch(err => alert("Email ou mot de passe incorrect"));
             },
 
             toggleService() {
@@ -251,15 +245,21 @@
 
             saveSale() {
                 if(!this.inService) return;
+                if(!this.form.client) return alert("Veuillez entrer le nom du client");
+                
                 db.collection("ventes").add({
                     agent: this.currentUser.name,
                     client: this.form.client,
                     total: this.calculateFinal(),
+                    type: this.form.type,
                     date: new Date().toLocaleString()
-                }).then(() => alert("Vente enregistrée !"));
+                }).then(() => alert("Vente enregistrée avec succès !"));
             },
 
-            logout() { this.isLoggedIn = false; this.inService = false; }
+            logout() { 
+                this.isLoggedIn = false; 
+                this.inService = false; 
+            }
         }
     }
     </script>
